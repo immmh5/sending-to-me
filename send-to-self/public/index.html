@@ -1,0 +1,689 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>أرسل لنفسي</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>📥</text></svg>">
+<style>
+  :root {
+    --bg: #0b0e14;
+    --bg2: #10141d;
+    --card: #161b26;
+    --card2: #1b2130;
+    --border: #252d3d;
+    --text: #e8edf5;
+    --muted: #8d99ad;
+    --accent: #34d399;
+    --accent2: #0ea5e9;
+    --danger: #f87171;
+    --radius: 14px;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { height: 100%; }
+  body {
+    font-family: "Segoe UI", Tahoma, "Noto Kufi Arabic", "Cairo", system-ui, sans-serif;
+    background: radial-gradient(1200px 600px at 50% -10%, #172032 0%, var(--bg) 55%);
+    color: var(--text);
+    min-height: 100vh;
+    line-height: 1.6;
+  }
+  .hidden { display: none !important; }
+  button { font-family: inherit; cursor: pointer; }
+  input, textarea { font-family: inherit; }
+
+  /* ---------- screens ---------- */
+  .screen { max-width: 780px; margin: 0 auto; padding: 16px; }
+
+  /* ---------- login ---------- */
+  #loginView { display: flex; align-items: center; justify-content: center; min-height: 100vh; }
+  #loginView.hidden { display: none; }
+  .loginCard {
+    width: 100%; max-width: 380px; background: var(--card);
+    border: 1px solid var(--border); border-radius: 20px;
+    padding: 36px 28px; text-align: center; box-shadow: 0 20px 60px rgba(0,0,0,.45);
+  }
+  .logo { font-size: 52px; }
+  .loginCard h1 { font-size: 24px; margin: 8px 0 4px; }
+  .loginCard p.sub { color: var(--muted); font-size: 14px; margin-bottom: 22px; }
+  .loginCard input {
+    width: 100%; padding: 13px 16px; border-radius: 12px;
+    border: 1px solid var(--border); background: var(--bg2); color: var(--text);
+    font-size: 16px; text-align: center; outline: none; transition: border .15s;
+  }
+  .loginCard input:focus { border-color: var(--accent); }
+  .btnPrimary {
+    width: 100%; margin-top: 14px; padding: 13px; border: none; border-radius: 12px;
+    background: linear-gradient(135deg, var(--accent), var(--accent2));
+    color: #06281e; font-size: 16px; font-weight: 700;
+  }
+  .btnPrimary:hover { filter: brightness(1.06); }
+  .btnPrimary:disabled { opacity: .6; cursor: not-allowed; }
+  .error { color: var(--danger); font-size: 13px; margin-top: 12px; }
+  .okMsg { color: var(--accent); font-size: 13px; margin-top: 12px; }
+
+  /* ---------- header ---------- */
+  header {
+    display: flex; align-items: center; justify-content: space-between; gap: 10px;
+    padding: 14px 2px; flex-wrap: wrap;
+    position: sticky; top: 0; background: rgba(11,14,20,.8); backdrop-filter: blur(10px); z-index: 5;
+  }
+  header .title { font-size: 20px; font-weight: 800; }
+  header .actions { display: flex; gap: 8px; }
+  .ghost {
+    background: var(--card); color: var(--text); border: 1px solid var(--border);
+    padding: 8px 13px; border-radius: 10px; font-size: 13px;
+  }
+  .ghost:hover { border-color: var(--muted); }
+  .dangerGhost {
+    background: transparent; color: var(--danger); border: 1px solid rgba(248,113,113,.35);
+    padding: 8px 13px; border-radius: 10px; font-size: 13px;
+  }
+  .dangerGhost:hover { background: rgba(248,113,113,.1); }
+
+  /* ---------- composer ---------- */
+  .composer {
+    background: var(--card); border: 1px solid var(--border); border-radius: var(--radius);
+    padding: 16px; margin: 10px 0 22px;
+  }
+  .composer textarea {
+    width: 100%; min-height: 84px; resize: vertical; background: var(--bg2);
+    border: 1px solid var(--border); border-radius: 12px; color: var(--text);
+    padding: 12px 14px; font-size: 15px; outline: none;
+  }
+  .composer textarea:focus { border-color: var(--accent); }
+  .dropzone { margin-top: 12px; }
+  .dropzone.dragging { outline: 2px dashed var(--accent); outline-offset: 4px; border-radius: 12px; }
+  .attachments { display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 12px; }
+  .attach {
+    position: relative; background: var(--bg2); border: 1px solid var(--border);
+    border-radius: 12px; padding: 8px; display: flex; flex-direction: column; align-items: center;
+    gap: 4px; max-width: 130px;
+  }
+  .attach img { width: 90px; height: 90px; object-fit: cover; border-radius: 8px; }
+  .attach .name { font-size: 11px; color: var(--muted); max-width: 110px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; direction: ltr; }
+  .attach .rm {
+    position: absolute; top: -8px; left: -8px; width: 22px; height: 22px; border-radius: 50%;
+    background: var(--danger); color: #fff; border: none; font-size: 12px; line-height: 1;
+  }
+  .dropActions { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+  .sendBtn {
+    flex: 1; padding: 12px; border: none; border-radius: 12px;
+    background: linear-gradient(135deg, var(--accent), var(--accent2));
+    color: #06281e; font-size: 15px; font-weight: 800;
+  }
+  .sendBtn:hover { filter: brightness(1.06); }
+  .sendBtn:disabled { opacity: .6; cursor: not-allowed; }
+  .hint { font-size: 12px; color: var(--muted); margin-top: 8px; }
+  .progressWrap { height: 6px; background: var(--bg2); border-radius: 99px; overflow: hidden; margin-top: 12px; }
+  .progressBar { height: 100%; width: 0; background: linear-gradient(90deg, var(--accent), var(--accent2)); transition: width .2s; }
+
+  /* ---------- feed ---------- */
+  .feedHeader { display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; }
+  .feedHeader h2 { font-size: 16px; }
+  .feedHeader h2 span { color: var(--muted); font-weight: 400; font-size: 13px; }
+  .feed { display: flex; flex-direction: column; gap: 14px; }
+  .empty { text-align: center; color: var(--muted); padding: 60px 20px; font-size: 15px; }
+
+  .card {
+    background: var(--card); border: 1px solid var(--border); border-radius: var(--radius);
+    padding: 14px 16px; animation: fadeIn .25s ease;
+  }
+  @keyframes fadeIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; } }
+  .cardTop { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-bottom: 10px; }
+  .meta { font-size: 12.5px; color: var(--muted); }
+  .meta .dot { margin: 0 4px; opacity: .6; }
+  .cardBtns { display: flex; gap: 4px; }
+  .iconBtn {
+    width: 30px; height: 30px; border-radius: 8px; border: 1px solid var(--border);
+    background: var(--bg2); font-size: 14px; line-height: 1;
+  }
+  .iconBtn:hover { border-color: var(--muted); }
+  .iconBtn.danger:hover { border-color: var(--danger); }
+
+  .textBody { white-space: pre-wrap; word-break: break-word; font-size: 15px; background: var(--bg2); border-radius: 10px; padding: 12px 14px; border: 1px solid var(--border); }
+  .media { width: 100%; max-height: 460px; object-fit: contain; border-radius: 10px; background: #000; display: block; }
+  video.media, audio.audio { width: 100%; }
+  audio.audio { margin-top: 4px; }
+  .fileRow { display: flex; align-items: center; gap: 14px; }
+  .fileIcon { font-size: 34px; }
+  .fileInfo { min-width: 0; }
+  .fileName { font-size: 14.5px; font-weight: 600; word-break: break-all; }
+  .fileMeta { font-size: 12px; color: var(--muted); }
+
+  /* ---------- lightbox ---------- */
+  .lightbox {
+    position: fixed; inset: 0; background: rgba(0,0,0,.88); z-index: 50;
+    display: flex; align-items: center; justify-content: center; padding: 20px;
+  }
+  .lightbox img { max-width: 100%; max-height: 100%; border-radius: 8px; }
+  .lightboxClose {
+    position: absolute; top: 16px; left: 16px; width: 40px; height: 40px; border-radius: 50%;
+    background: rgba(255,255,255,.12); color: #fff; border: none; font-size: 18px;
+  }
+
+  /* ---------- modal ---------- */
+  .modal {
+    position: fixed; inset: 0; background: rgba(0,0,0,.6); z-index: 60;
+    display: flex; align-items: center; justify-content: center; padding: 20px;
+  }
+  .modalCard {
+    width: 100%; max-width: 380px; background: var(--card); border: 1px solid var(--border);
+    border-radius: 18px; padding: 24px; box-shadow: 0 20px 60px rgba(0,0,0,.5);
+  }
+  .modalCard h3 { font-size: 18px; margin-bottom: 16px; }
+  .modalCard input {
+    width: 100%; padding: 12px 14px; border-radius: 11px; border: 1px solid var(--border);
+    background: var(--bg2); color: var(--text); font-size: 15px; outline: none; margin-bottom: 10px;
+    direction: rtl;
+  }
+  .modalCard input:focus { border-color: var(--accent); }
+  .modalActions { display: flex; gap: 10px; margin-top: 8px; }
+  .modalActions .btnPrimary { margin-top: 0; }
+  .modalActions .ghost { flex: 1; }
+  .modalActions .btnPrimary { flex: 1.4; }
+  .modalText { color: var(--muted); font-size: 14.5px; margin-bottom: 18px; }
+
+  /* ---------- toast ---------- */
+  #toast {
+    position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%) translateY(20px);
+    background: #232b3a; color: var(--text); border: 1px solid var(--border);
+    padding: 12px 22px; border-radius: 99px; font-size: 14px; opacity: 0; pointer-events: none;
+    transition: all .25s; z-index: 80; max-width: 90vw; text-align: center;
+  }
+  #toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+  @media (max-width: 480px) {
+    header .title { font-size: 17px; }
+    .ghost, .dangerGhost { font-size: 12px; padding: 7px 10px; }
+  }
+</style>
+</head>
+<body>
+
+  <!-- ================= LOGIN ================= -->
+  <div id="loginView" class="screen">
+    <div class="loginCard">
+      <div class="logo">📥</div>
+      <h1>أرسل لنفسي</h1>
+      <p class="sub">مساحة واحدة مشتركة — لا حسابات، فقط كلمة مرور</p>
+      <input type="password" id="passwordInput" placeholder="كلمة المرور" autocomplete="current-password">
+      <button class="btnPrimary" id="loginBtn">دخول</button>
+      <div class="error hidden" id="loginError">كلمة المرور غير صحيحة</div>
+      <div class="okMsg hidden" id="loginMsg"></div>
+    </div>
+  </div>
+
+  <!-- ================= MAIN ================= -->
+  <div id="mainView" class="screen hidden">
+    <header>
+      <div class="title">📥 أرسل لنفسي</div>
+      <div class="actions">
+        <button class="ghost" id="changePassBtn">🔑 تغيير كلمة المرور</button>
+        <button class="ghost" id="logoutBtn">خروج</button>
+      </div>
+    </header>
+
+    <div class="composer">
+      <textarea id="noteInput" placeholder="اكتب ملاحظة أو نص تريد إرساله لنفسك…"></textarea>
+      <div class="dropzone" id="dropZone">
+        <div class="attachments" id="attachmentsPreview"></div>
+        <div class="dropActions">
+          <button class="ghost" id="attachBtn">📎 إرفاق ملفات</button>
+          <button class="sendBtn" id="sendBtn">إرسال 🚀</button>
+        </div>
+        <input type="file" id="fileInput" multiple hidden>
+      </div>
+      <div class="hint">اسحب الملفات وأفلتها هنا، أو اضغط «إرفاق ملفات» · Ctrl + Enter للإرسال السريع</div>
+      <div class="progressWrap hidden" id="progressWrap"><div class="progressBar" id="progressBar"></div></div>
+    </div>
+
+    <div class="feedHeader">
+      <h2>ما تم إرساله <span id="count"></span></h2>
+      <button class="dangerGhost" id="clearAllBtn">🗑️ مسح الكل</button>
+    </div>
+    <div class="feed" id="feed"></div>
+    <div class="empty hidden" id="emptyState">لا يوجد شيء بعد 🚀 أرسل أول صورة أو ملف أو ملاحظة.</div>
+  </div>
+
+  <!-- ================= LIGHTBOX ================= -->
+  <div class="lightbox hidden" id="lightbox">
+    <img id="lightboxImg" alt="">
+    <button class="lightboxClose" id="lightboxClose">✕</button>
+  </div>
+
+  <!-- ================= CHANGE PASSWORD ================= -->
+  <div class="modal hidden" id="changePassModal">
+    <div class="modalCard">
+      <h3>🔑 تغيير كلمة المرور</h3>
+      <input type="password" id="curPass" placeholder="كلمة المرور الحالية">
+      <input type="password" id="newPass" placeholder="كلمة المرور الجديدة">
+      <input type="password" id="newPass2" placeholder="تأكيد كلمة المرور الجديدة">
+      <div class="error hidden" id="changeErr"></div>
+      <div class="modalActions">
+        <button class="ghost" id="changeCancel">إلغاء</button>
+        <button class="btnPrimary" id="changeSave">حفظ</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ================= CONFIRM ================= -->
+  <div class="modal hidden" id="confirmModal">
+    <div class="modalCard">
+      <h3>تأكيد</h3>
+      <p class="modalText" id="confirmText"></p>
+      <div class="modalActions">
+        <button class="ghost" id="confirmNo">إلغاء</button>
+        <button class="btnPrimary" id="confirmYes">نعم</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="toast"></div>
+
+<script>
+'use strict';
+
+/* ---------------- state ---------------- */
+let token = null;
+let memToken = null;
+let items = [];
+let pendingFiles = [];
+
+const $ = (id) => document.getElementById(id);
+
+const store = {
+  get() {
+    try { return window.localStorage.getItem('sendme_token'); } catch (e) { return memToken; }
+  },
+  set(v) {
+    memToken = v;
+    try { window.localStorage.setItem('sendme_token', v); } catch (e) {}
+  },
+  clear() {
+    memToken = null;
+    try { window.localStorage.removeItem('sendme_token'); } catch (e) {}
+  }
+};
+
+/* ---------------- api ---------------- */
+function q(path) {
+  return path + (path.includes('?') ? '&' : '?') + 'token=' + encodeURIComponent(token || '');
+}
+
+async function api(path, opts) {
+  opts = opts || {};
+  const headers = { ...(opts.headers || {}) };
+  if (opts.json !== undefined) { headers['Content-Type'] = 'application/json'; opts.body = JSON.stringify(opts.json); }
+  const res = await fetch(q(path), { ...opts, headers });
+  let data = null;
+  try { data = await res.json(); } catch (e) {}
+  if (!res.ok) { const err = new Error('http'); err.status = res.status; err.data = data; throw err; }
+  return data;
+}
+
+/* ---------------- toast ---------------- */
+let toastTimer = null;
+function toast(msg) {
+  const t = $('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => t.classList.remove('show'), 2600);
+}
+
+/* ---------------- views ---------------- */
+function showLogin(msg) {
+  $('mainView').classList.add('hidden');
+  $('loginView').classList.remove('hidden');
+  const m = $('loginMsg');
+  if (msg) { m.textContent = msg; m.classList.remove('hidden'); } else { m.classList.add('hidden'); }
+  $('passwordInput').value = '';
+  setTimeout(() => $('passwordInput').focus(), 50);
+}
+
+function showMain() {
+  $('loginView').classList.add('hidden');
+  $('mainView').classList.remove('hidden');
+  loadItems();
+}
+
+/* ---------------- auth actions ---------------- */
+async function doLogin() {
+  const pw = $('passwordInput').value;
+  if (!pw) { toast('اكتب كلمة المرور'); return; }
+  const btn = $('loginBtn');
+  btn.disabled = true;
+  $('loginError').classList.add('hidden');
+  try {
+    const res = await fetch('/api/login', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ password: pw })
+    });
+    const data = await res.json().catch(() => null);
+    if (!res.ok) { $('loginError').classList.remove('hidden'); return; }
+    token = data.token;
+    store.set(token);
+    showMain();
+  } catch (e) {
+    toast('تعذر الاتصال بالخادم');
+  } finally {
+    btn.disabled = false;
+  }
+}
+
+function logout() {
+  store.clear();
+  token = null;
+  showLogin();
+}
+
+/* ---------------- feed ---------------- */
+function esc(s) {
+  return String(s == null ? '' : s)
+    .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+}
+
+function fmtSize(b) {
+  if (b < 1024) return b + ' بايت';
+  if (b < 1048576) return (b / 1024).toFixed(1) + ' كيلوبايت';
+  if (b < 1073741824) return (b / 1048576).toFixed(1) + ' ميجابايت';
+  return (b / 1073741824).toFixed(2) + ' جيجابايت';
+}
+
+function fmtDate(ts) {
+  const d = new Date(ts);
+  const pad = (n) => String(n).padStart(2, '0');
+  return d.getFullYear() + '/' + pad(d.getMonth() + 1) + '/' + pad(d.getDate()) +
+         ' ' + pad(d.getHours()) + ':' + pad(d.getMinutes());
+}
+
+function timeAgo(ts) {
+  const diff = Date.now() - ts;
+  const min = 60000, hr = 3600000, day = 86400000;
+  const rtf = new Intl.RelativeTimeFormat('ar', { numeric: 'auto' });
+  if (diff < min) return 'الآن';
+  if (diff < hr) return rtf.format(-Math.round(diff / min), 'minute');
+  if (diff < day) return rtf.format(-Math.round(diff / hr), 'hour');
+  if (diff < 7 * day) return rtf.format(-Math.round(diff / day), 'day');
+  return fmtDate(ts);
+}
+
+function typeLabel(it) {
+  if (it.type === 'text') return '💬 ملاحظة';
+  if (it.type === 'image') return '🖼️ صورة';
+  if (it.type === 'video') return '🎬 فيديو';
+  if (it.type === 'audio') return '🎵 صوت';
+  return '📎 ملف';
+}
+
+function iconFor(name) {
+  const ext = (String(name).match(/\.([A-Za-z0-9]{1,10})$/) || [])[1] || '';
+  const map = {
+    pdf: '📄', doc: '📝', docx: '📝', txt: '📃', md: '📃',
+    xls: '📊', xlsx: '📊', csv: '📊', ppt: '📽️', pptx: '📽️',
+    zip: '🗜️', rar: '🗜️', '7z': '🗜️', gz: '🗜️',
+    mp3: '🎵', wav: '🎵', m4a: '🎵', ogg: '🎵',
+    mp4: '🎬', mov: '🎬', mkv: '🎬', webm: '🎬',
+    apk: '📱', exe: '💿', json: '🧾', html: '🌐'
+  };
+  return map[ext.toLowerCase()] || '📎';
+}
+
+function fileUrl(id, download) {
+  let u = '/api/file/' + id + '?token=' + encodeURIComponent(token || '');
+  if (download) u += '&download=1';
+  return u;
+}
+
+function buildItemHTML(it) {
+  const id = it.id;
+  const top =
+    '<div class="cardTop">' +
+      '<span class="meta">' + typeLabel(it) + '<span class="dot">·</span><span class="time">' + timeAgo(it.createdAt) + '</span></span>' +
+      '<span class="cardBtns">' +
+        (it.type === 'text' ? '<button class="iconBtn" data-act="copy" data-id="' + id + '" title="نسخ">📋</button>' : '') +
+        (it.type === 'file' ? '<button class="iconBtn" data-act="open" data-id="' + id + '" title="فتح">👁️</button>' : '') +
+        (it.type !== 'text' ? '<button class="iconBtn" data-act="download" data-id="' + id + '" title="تحميل">⬇️</button>' : '') +
+        '<button class="iconBtn danger" data-act="del" data-id="' + id + '" title="حذف">🗑️</button>' +
+      '</span>' +
+    '</div>';
+
+  let body = '';
+  if (it.type === 'text') {
+    body = '<div class="textBody">' + esc(it.text) + '</div>';
+  } else if (it.type === 'image') {
+    body = '<img class="media" loading="lazy" src="' + fileUrl(id) + '" data-act="view" data-id="' + id + '" alt="' + esc(it.filename) + '">';
+  } else if (it.type === 'video') {
+    body = '<video class="media" controls preload="metadata" src="' + fileUrl(id) + '"></video>';
+  } else if (it.type === 'audio') {
+    body = '<audio class="audio" controls src="' + fileUrl(id) + '"></audio>';
+  } else {
+    body =
+      '<div class="fileRow">' +
+        '<div class="fileIcon">' + iconFor(it.filename) + '</div>' +
+        '<div class="fileInfo">' +
+          '<div class="fileName" dir="ltr">' + esc(it.filename) + '</div>' +
+          '<div class="fileMeta">' + fmtSize(it.size) + ' · ' + esc(it.mime || '') + '</div>' +
+        '</div>' +
+      '</div>';
+  }
+  return '<div class="card">' + top + body + '</div>';
+}
+
+function render() {
+  const feed = $('feed');
+  $('count').textContent = items.length ? '(' + items.length + ' عنصر)' : '';
+  if (items.length === 0) {
+    feed.innerHTML = '';
+    $('emptyState').classList.remove('hidden');
+    return;
+  }
+  $('emptyState').classList.add('hidden');
+  const sorted = items.slice().sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0));
+  feed.innerHTML = sorted.map(buildItemHTML).join('');
+}
+
+async function loadItems() {
+  try {
+    items = await api('/api/items');
+    render();
+  } catch (e) {
+    if (e.status === 401) { logout(); } else { toast('تعذر تحميل العناصر'); }
+  }
+}
+
+/* ---------------- feed interactions ---------------- */
+$('feed').addEventListener('click', async (e) => {
+  const btn = e.target.closest('[data-act]');
+  if (!btn) return;
+  const act = btn.dataset.act;
+  const id = btn.dataset.id;
+  if (act === 'view') { openLightbox(fileUrl(id)); return; }
+  if (act === 'copy') {
+    const it = items.find((x) => x.id === id);
+    if (it) copyText(it.text);
+    return;
+  }
+  if (act === 'download') { window.open(fileUrl(id, true), '_blank'); return; }
+  if (act === 'open') { window.open(fileUrl(id, false), '_blank'); return; }
+  if (act === 'del') {
+    try { await api('/api/items/' + id, { method: 'DELETE' }); toast('تم الحذف 🗑️'); loadItems(); }
+    catch (err) { toast('تعذر الحذف'); }
+  }
+});
+
+async function copyText(t) {
+  try { await navigator.clipboard.writeText(t); toast('تم النسخ 📋'); return; } catch (e) {}
+  try {
+    const ta = document.createElement('textarea');
+    ta.value = t; document.body.appendChild(ta); ta.select();
+    document.execCommand('copy'); document.body.removeChild(ta);
+    toast('تم النسخ 📋');
+  } catch (e) { toast('تعذر النسخ'); }
+}
+
+/* ---------------- lightbox ---------------- */
+function openLightbox(src) {
+  $('lightboxImg').src = src;
+  $('lightbox').classList.remove('hidden');
+}
+$('lightboxClose').addEventListener('click', () => $('lightbox').classList.add('hidden'));
+$('lightbox').addEventListener('click', (e) => { if (e.target === $('lightbox')) $('lightbox').classList.add('hidden'); });
+
+/* ---------------- composer ---------------- */
+function renderAttachments() {
+  const box = $('attachmentsPreview');
+  box.innerHTML = '';
+  pendingFiles.forEach((f, i) => {
+    const div = document.createElement('div');
+    div.className = 'attach';
+    if (f.type && f.type.startsWith('image/')) {
+      const img = document.createElement('img');
+      img.src = URL.createObjectURL(f);
+      const name = document.createElement('span');
+      name.className = 'name';
+      name.textContent = f.name;
+      div.appendChild(img);
+      div.appendChild(name);
+    } else {
+      const name = document.createElement('span');
+      name.className = 'name';
+      name.textContent = '📎 ' + f.name;
+      div.appendChild(name);
+    }
+    const rm = document.createElement('button');
+    rm.className = 'rm';
+    rm.textContent = '✕';
+    rm.addEventListener('click', () => { pendingFiles.splice(i, 1); renderAttachments(); });
+    div.appendChild(rm);
+    box.appendChild(div);
+  });
+}
+
+function addFiles(list) {
+  for (const f of list) pendingFiles.push(f);
+  renderAttachments();
+}
+
+$('attachBtn').addEventListener('click', () => $('fileInput').click());
+$('fileInput').addEventListener('change', () => { addFiles($('fileInput').files); $('fileInput').value = ''; });
+
+const dz = $('dropZone');
+['dragenter', 'dragover'].forEach((ev) => dz.addEventListener(ev, (e) => { e.preventDefault(); dz.classList.add('dragging'); }));
+['dragleave', 'drop'].forEach((ev) => dz.addEventListener(ev, (e) => { e.preventDefault(); dz.classList.remove('dragging'); }));
+dz.addEventListener('drop', (e) => {
+  if (e.dataTransfer && e.dataTransfer.files.length) addFiles(e.dataTransfer.files);
+});
+
+function setProgress(p) {
+  $('progressWrap').classList.remove('hidden');
+  $('progressBar').style.width = Math.round(p * 100) + '%';
+}
+function hideProgress() { $('progressWrap').classList.add('hidden'); }
+
+function clearComposer() {
+  $('noteInput').value = '';
+  pendingFiles = [];
+  renderAttachments();
+}
+
+function send() {
+  const note = $('noteInput').value.trim();
+  if (!note && pendingFiles.length === 0) { toast('اكتب ملاحظة أو أرفق ملفات أولاً'); return; }
+  const btn = $('sendBtn');
+  btn.disabled = true;
+
+  const fd = new FormData();
+  if (note) fd.append('text', note);
+  pendingFiles.forEach((f) => fd.append('files', f, f.name));
+
+  const xhr = new XMLHttpRequest();
+  xhr.open('POST', q('/api/upload'));
+  xhr.upload.onprogress = (e) => { if (e.lengthComputable) setProgress(e.loaded / e.total); };
+  xhr.onload = () => {
+    hideProgress();
+    btn.disabled = false;
+    if (xhr.status >= 200 && xhr.status < 300) {
+      clearComposer();
+      loadItems();
+      toast('تم الإرسال ✅');
+    } else if (xhr.status === 401) {
+      logout();
+    } else {
+      toast('فشل الإرسال (' + xhr.status + ')');
+    }
+  };
+  xhr.onerror = () => { hideProgress(); btn.disabled = false; toast('فشل الإرسال — تحقق من الاتصال'); };
+  xhr.send(fd);
+}
+
+$('sendBtn').addEventListener('click', send);
+$('noteInput').addEventListener('keydown', (e) => { if (e.ctrlKey && e.key === 'Enter') send(); });
+
+/* ---------------- header buttons ---------------- */
+$('logoutBtn').addEventListener('click', logout);
+
+$('clearAllBtn').addEventListener('click', () => {
+  confirmDialog('سيتم حذف كل ما تم إرساله نهائياً. هل أنت متأكد؟', async () => {
+    try { await api('/api/items', { method: 'DELETE' }); toast('تم مسح الكل'); loadItems(); }
+    catch (e) { toast('تعذر المسح'); }
+  });
+});
+
+/* ---------------- change password ---------------- */
+function openChangeModal() {
+  $('curPass').value = $('newPass').value = $('newPass2').value = '';
+  $('changeErr').classList.add('hidden');
+  $('changePassModal').classList.remove('hidden');
+  setTimeout(() => $('curPass').focus(), 50);
+}
+function closeChangeModal() { $('changePassModal').classList.add('hidden'); }
+function showChangeErr(msg) { const el = $('changeErr'); el.textContent = msg; el.classList.remove('hidden'); }
+
+$('changePassBtn').addEventListener('click', openChangeModal);
+$('changeCancel').addEventListener('click', closeChangeModal);
+$('changeSave').addEventListener('click', async () => {
+  const cur = $('curPass').value;
+  const next = $('newPass').value;
+  const next2 = $('newPass2').value;
+  $('changeErr').classList.add('hidden');
+  if (next.length < 3) return showChangeErr('كلمة المرور الجديدة قصيرة جداً (3 أحرف على الأقل)');
+  if (next !== next2) return showChangeErr('تأكيد كلمة المرور غير متطابق');
+  try {
+    await api('/api/change-password', { method: 'POST', json: { current: cur, next } });
+    closeChangeModal();
+    store.clear();
+    token = null;
+    showLogin('تم تغيير كلمة المرور ✅ سجّل الدخول من جديد');
+  } catch (e) {
+    if (e.status === 401) showChangeErr('كلمة المرور الحالية غير صحيحة');
+    else showChangeErr('حدث خطأ، حاول مجدداً');
+  }
+});
+
+/* ---------------- confirm dialog ---------------- */
+function confirmDialog(text, onYes) {
+  $('confirmText').textContent = text;
+  $('confirmModal').classList.remove('hidden');
+  $('confirmYes').onclick = () => { $('confirmModal').classList.add('hidden'); onYes(); };
+  $('confirmNo').onclick = () => $('confirmModal').classList.add('hidden');
+}
+
+/* ---------------- boot ---------------- */
+$('loginBtn').addEventListener('click', doLogin);
+$('passwordInput').addEventListener('keydown', (e) => { if (e.key === 'Enter') doLogin(); });
+
+(async function boot() {
+  token = store.get();
+  if (token) {
+    try { await api('/api/me'); showMain(); return; }
+    catch (e) { store.clear(); token = null; }
+  }
+  showLogin();
+})();
+</script>
+</body>
+</html>
